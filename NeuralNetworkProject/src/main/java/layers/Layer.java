@@ -2,6 +2,9 @@ package layers;
 
 import org.ejml.simple.SimpleMatrix;
 
+import activations.Activation;
+import activations.Relu;
+
 public abstract class Layer {
 
 	private SimpleMatrix bias;
@@ -10,13 +13,16 @@ public abstract class Layer {
 	private SimpleMatrix biasGrad;
 	private SimpleMatrix inputs;
 	
+	private Activation activation;
+	
 	public Layer(int inputs, int outputs) { 
-		this.changeBias(new SimpleMatrix(new double[inputs][1]));
-		this.changeBiasGrad(new SimpleMatrix(new double[inputs][1]));
-		this.changeInputs(new SimpleMatrix(new double[inputs][outputs]));
-		this.changeWeights(new SimpleMatrix(new double[inputs][outputs]));
-		this.changeWeightsGrad(new SimpleMatrix(new double[inputs][outputs]));
+		this.changeBias(new SimpleMatrix(inputs, 1));
+		this.changeBiasGrad(new SimpleMatrix(inputs, 1));
+		this.changeInputs(new SimpleMatrix(inputs, outputs));
+		this.changeWeights(new SimpleMatrix(inputs, outputs));
+		this.changeWeightsGrad(new SimpleMatrix(inputs, outputs));
 		
+		this.changeActivation(new Relu());
 	}
 	
 	public int inputFeatures() {
@@ -67,4 +73,31 @@ public abstract class Layer {
 		this.inputs = inputs;
 	}
 
+	public Activation activation() {
+		return this.activation;
+	}
+	
+	public void changeActivation(Activation activation) {
+		this.activation = activation;
+	}
+	
+	public SimpleMatrix feedforward(SimpleMatrix inputs) {
+		this.changeInputs(inputs);
+		
+		SimpleMatrix outputs = this.weights().mult(inputs);
+
+		for (int outputRow = 0; outputRow < outputs.numRows(); outputRow++) {
+			outputs.set(outputRow,  0, outputs.get(outputRow, 0) + this.bias().get(outputRow, 0));
+			
+			outputs.set(outputRow,  0, this.activation().activationFunction(outputs.get(outputRow, 0)));
+		}
+		
+		return outputs;
+	}
+	
+	 public SimpleMatrix backPropagation(SimpleMatrix errors, int learningRate) { 
+		 SimpleMatrix outputs = this.feedforward(this.inputs());
+		 
+		 
+	 }
 }
